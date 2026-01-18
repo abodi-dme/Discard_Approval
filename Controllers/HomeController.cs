@@ -19,30 +19,42 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(int page = 1)
     {
-        int pageSize = 50;
-        
-        // Get total count for pagination
-        var totalItems = await _context.SerpProductInstances.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        try
+        {
+            int pageSize = 50;
+            
+            // Filter by Status "Needs Repairing"
+            var query = _context.DiscardApprovalInputs
+                .Where(x => x.Status == "Needs Repairing");
 
-        // Ensure page is within valid range
-        page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+            // Get total count for pagination
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-        // Fetch paginated data
-        var data = await _context.SerpProductInstances
-            .AsNoTracking()
-            .OrderBy(x => x.Product) // Fix: determinisic order for pagination
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+            // Ensure page is within valid range
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
 
-        // Pass pagination info to View
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = totalPages;
-        ViewBag.HasPrevious = page > 1;
-        ViewBag.HasNext = page < totalPages;
+            // Fetch paginated data
+            var data = await query
+                .AsNoTracking()
+                .OrderBy(x => x.Product) // Fix: determinisic order for pagination
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-        return View(data);
+            // Pass pagination info to View
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.HasPrevious = page > 1;
+            ViewBag.HasNext = page < totalPages;
+
+            return View(data);
+        }
+        catch (Exception ex)
+        {
+             System.IO.File.WriteAllText("error_log.txt", ex.ToString());
+             throw;
+        }
     }
 
     [HttpPost]
@@ -72,6 +84,10 @@ public class HomeController : Controller
                     ? null 
                     : DateTime.Parse(item.ApprovedDate);
                 existing.Notes = item.Notes;
+                existing.Type = item.Type;
+                existing.MgrWarehouse = item.MgrWarehouse;
+                existing.MgrDfo = item.MgrDfo;
+                existing.MgrVp = item.MgrVp;
                 existing.UpdatedAt = DateTime.Now;
                 updatedCount++;
             }
@@ -87,6 +103,10 @@ public class HomeController : Controller
                         ? null 
                         : DateTime.Parse(item.ApprovedDate),
                     Notes = item.Notes,
+                    Type = item.Type,
+                    MgrWarehouse = item.MgrWarehouse,
+                    MgrDfo = item.MgrDfo,
+                    MgrVp = item.MgrVp,
                     UpdatedAt = DateTime.Now
                 };
                 _context.DiscardApprovals.Add(newApproval);
@@ -102,6 +122,7 @@ public class HomeController : Controller
 
         return RedirectToAction("Index");
     }
+
 
     public IActionResult Privacy()
     {

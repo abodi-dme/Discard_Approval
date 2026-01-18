@@ -1,0 +1,14 @@
+Received 50 items, filtered to 4 items with input.
+- AssetTag: 	000000263901, Approved: Yes, Notes: PERSISTENCE TEST NOTE
+- AssetTag: 	000000279809, Approved: No, Notes: 
+- AssetTag: 	000000202954, Approved: No, Notes: 
+- AssetTag: 	000000291033, Approved: No, Notes: 
+Received 50 items, filtered to 4 items with input.
+- AssetTag: 	000000263901, Approved: Yes, Notes: PERSISTENCE TEST NOTE
+- AssetTag: 	000000279809, Approved: No, Notes: 
+- AssetTag: 	000000202954, Approved: No, Notes: 
+- AssetTag: 	000000291033, Approved: No, Notes: 
+Received 50 items, filtered to 1 items with input.
+- AssetTag: 	000000049420, Approved: Yes, Notes: TRIM TEST NOTE
+Received 50 items, filtered to 1 items with input.
+- AssetTag: 	000000063579, Approved: Yes, Notes: 

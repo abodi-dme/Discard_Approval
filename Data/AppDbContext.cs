@@ -11,5 +11,6 @@ namespace WebApp_Anti.Data
 
         public DbSet<SerpProductInstance> SerpProductInstances { get; set; }
         public DbSet<DiscardApproval> DiscardApprovals { get; set; }
+        public DbSet<DiscardApprovalInput> DiscardApprovalInputs { get; set; }
     }
 }

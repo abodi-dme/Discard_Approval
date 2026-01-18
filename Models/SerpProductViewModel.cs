@@ -7,5 +7,9 @@ namespace WebApp_Anti.Models
         public string? Approved { get; set; }
         public string? ApprovedDate { get; set; }
         public string? Notes { get; set; }
+        public string? Type { get; set; }
+        public string? MgrWarehouse { get; set; }
+        public string? MgrDfo { get; set; }
+        public string? MgrVp { get; set; }
     }
 }

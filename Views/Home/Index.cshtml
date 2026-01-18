@@ -1,7 +1,14 @@
-﻿@model IEnumerable<WebApp_Anti.Models.SerpProductInstance>
+﻿@model IEnumerable<WebApp_Anti.Models.DiscardApprovalInput>
 
 @{
-    ViewData["Title"] = "SERP Products";
+    ViewData["Title"] = "Discard Approval Inputs";
+}
+
+@functions {
+    public string FormatDateForInput(DateTime? date)
+    {
+        return date?.ToString("yyyy-MM-dd") ?? "";
+    }
 }
 
 @if (Model != null && Model.Any())
@@ -58,32 +65,38 @@
                     <tr>
                         <td>@item.Product</td>
                         <td>@item.AssetTag</td>
-                        <td>@item.Type</td>
+                        <td></td>
                         <td>@item.Status</td>
                         <td>@item.Manufacturer</td>
                         <td>@item.Model</td>
-                        <td>@item.MfrSerial</td>
+                        <td>@item.ManufacturerSerialNumber</td>
                         <td>@item.WarehouseName</td>
-                        <td>@item.DiscardReason</td>
-                        <td>@item.MgrWarehouse</td>
-                        <td>@item.MgrDfo</td>
-                        <td>@item.MgrVp</td>
-                        <td class="sticky-column sticky-approved">
-                            <!-- Hidden inputs to bind identity -->
+                        <td>@item.DiscardNotes</td>
+                        
+                        <!-- Input Columns (non-sticky) -->
+                        <td>
+                            <!-- Hidden inputs for identity -->
                             <input type="hidden" name="[@i].Product" value="@item.Product" />
                             <input type="hidden" name="[@i].AssetTag" value="@item.AssetTag" />
-                            
+                        </td>
+                        <td></td>
+                        <td></td>
+                        
+                        <!-- Sticky Input Columns -->
+                        <td class="sticky-column sticky-approved">
                             <select class="form-select form-select-sm approval-select" data-row-id="@i" name="[@i].Approved">
                                 <option value="">Select...</option>
-                                <option value="Yes">Yes</option>
-                                <option value="No">No</option>
+                                <option value="Yes" selected="@(item.Approved == "Yes" ? "selected" : null)">Yes</option>
+                                <option value="No" selected="@(item.Approved == "No" ? "selected" : null)">No</option>
                             </select>
                         </td>
                         <td class="sticky-column sticky-date">
-                            <input type="date" class="form-control form-control-sm approval-date" id="date-@i" name="[@i].ApprovedDate" readonly />
+                             <input type="date" class="form-control form-control-sm approval-date" id="date-@i" name="[@i].ApprovedDate" 
+                                    value="@FormatDateForInput(item.ApprovedDate)" readonly />
                         </td>
                         <td class="sticky-column sticky-notes">
-                            <input type="text" class="form-control form-control-sm notes-input" name="[@i].Notes" placeholder="Enter notes..." />
+                            <input type="text" class="form-control form-control-sm notes-input" name="[@i].Notes" 
+                                   placeholder="Enter notes..." />
                         </td>
                     </tr>
                     i++;
@@ -126,7 +139,7 @@
 else
 {
     <div class="alert alert-info">
-        No data found or connection failed.
+        No data found or connection failed. (Filtered by 'Needs Repairing')
     </div>
 }
 
@@ -145,7 +158,6 @@ else
             // Sync scroll from Top -> Table
             topScrollContainer.scroll(function () {
                 tableContainer.scrollLeft(topScrollContainer.scrollLeft());
-                // Match scroll sync
             });
 
             // Sync scroll from Table -> Top

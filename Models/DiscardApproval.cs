@@ -23,6 +23,18 @@ namespace WebApp_Anti.Models
 
         public string? Notes { get; set; }
 
+        [MaxLength(50)]
+        public string? Type { get; set; }
+
+        [MaxLength(100)]
+        public string? MgrWarehouse { get; set; }
+
+        [MaxLength(100)]
+        public string? MgrDfo { get; set; }
+
+        [MaxLength(100)]
+        public string? MgrVp { get; set; }
+
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

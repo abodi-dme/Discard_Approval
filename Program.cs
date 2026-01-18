@@ -30,4 +30,13 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 
-app.Run();
+
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("CRITICAL ERROR: " + ex.ToString());
+    throw;
+}
