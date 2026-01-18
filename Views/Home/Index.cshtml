@@ -1,0 +1,171 @@
+﻿@model IEnumerable<WebApp_Anti.Models.SerpProductInstance>
+
+@{
+    ViewData["Title"] = "SERP Products";
+}
+
+@if (Model != null && Model.Any())
+{
+    <form asp-action="Submit" method="post">
+    
+    <div class="text-center position-relative">
+        <h1 class="display-4">Discard Approval</h1>
+        
+        <!-- Fixed Submit Button - Top Right -->
+        <button type="submit" class="btn btn-success btn-lg px-5 submit-btn-fixed">
+            Submit
+        </button>
+        
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                @TempData["Message"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    </div>
+
+    <!-- Top Scrollbar -->
+    <div id="top-scroll-container" style="width: 100%; overflow-x: auto; overflow-y: hidden; margin-bottom: 0px;">
+        <div id="top-scroll-content" style="height: 20px;"></div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Product</th>
+                    <th>Asset Tag</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Manufacturer</th>
+                    <th>Model</th>
+                    <th>MFR Serial #</th>
+                    <th>Warehouse</th>
+                    <th>Discard Reason</th>
+                    <th>MGR Warehouse</th>
+                    <th>MGR DFO</th>
+                    <th>MGR VP</th>
+                    <th class="sticky-column sticky-approved">Approved</th>
+                    <th class="sticky-column sticky-date">Approved Date</th>
+                    <th class="sticky-column sticky-notes">Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int i = 0; }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Product</td>
+                        <td>@item.AssetTag</td>
+                        <td>@item.Type</td>
+                        <td>@item.Status</td>
+                        <td>@item.Manufacturer</td>
+                        <td>@item.Model</td>
+                        <td>@item.MfrSerial</td>
+                        <td>@item.WarehouseName</td>
+                        <td>@item.DiscardReason</td>
+                        <td>@item.MgrWarehouse</td>
+                        <td>@item.MgrDfo</td>
+                        <td>@item.MgrVp</td>
+                        <td class="sticky-column sticky-approved">
+                            <!-- Hidden inputs to bind identity -->
+                            <input type="hidden" name="[@i].Product" value="@item.Product" />
+                            <input type="hidden" name="[@i].AssetTag" value="@item.AssetTag" />
+                            
+                            <select class="form-select form-select-sm approval-select" data-row-id="@i" name="[@i].Approved">
+                                <option value="">Select...</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </td>
+                        <td class="sticky-column sticky-date">
+                            <input type="date" class="form-control form-control-sm approval-date" id="date-@i" name="[@i].ApprovedDate" readonly />
+                        </td>
+                        <td class="sticky-column sticky-notes">
+                            <input type="text" class="form-control form-control-sm notes-input" name="[@i].Notes" placeholder="Enter notes..." />
+                        </td>
+                    </tr>
+                    i++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-center mt-4 gap-2">
+        @if (ViewBag.HasPrevious)
+        {
+            <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)" class="btn btn-outline-primary">
+                &laquo; Previous
+            </a>
+        }
+        else
+        {
+            <span class="btn btn-outline-secondary disabled">&laquo; Previous</span>
+        }
+
+        <span class="align-self-center mx-3">
+            Page <strong>@ViewBag.CurrentPage</strong> of <strong>@ViewBag.TotalPages</strong>
+        </span>
+
+        @if (ViewBag.HasNext)
+        {
+            <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)" class="btn btn-outline-primary">
+                Next &raquo;
+            </a>
+        }
+        else
+        {
+            <span class="btn btn-outline-secondary disabled">Next &raquo;</span>
+        }
+        
+    </div>
+    </form>
+}
+else
+{
+    <div class="alert alert-info">
+        No data found or connection failed.
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Top Scrollbar Synchronization
+            var tableContainer = $(".table-responsive");
+            var topScrollContainer = $("#top-scroll-container");
+            var topScrollContent = $("#top-scroll-content");
+
+            // Set width of top scroll dummy content to match table table width
+            var tableWidth = $(".table").outerWidth();
+            topScrollContent.width(tableWidth);
+
+            // Sync scroll from Top -> Table
+            topScrollContainer.scroll(function () {
+                tableContainer.scrollLeft(topScrollContainer.scrollLeft());
+                // Match scroll sync
+            });
+
+            // Sync scroll from Table -> Top
+            tableContainer.scroll(function () {
+                topScrollContainer.scrollLeft(tableContainer.scrollLeft());
+            });
+
+            // Auto-fill date on Approval 'Yes'
+            $('.approval-select').change(function () {
+                var selectedValue = $(this).val();
+                var rowId = $(this).data('row-id');
+                var dateInput = $('#date-' + rowId);
+
+                if (selectedValue === 'Yes') {
+                    var today = new Date().toISOString().split('T')[0];
+                    dateInput.val(today);
+                } else {
+                    dateInput.val('');
+                }
+            });
+        });
+    </script>
+}
