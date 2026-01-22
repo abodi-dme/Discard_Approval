@@ -1,0 +1,125 @@
+@model WebApp_Anti.Models.DiscardApprovalTableViewModel
+
+@{
+    var stage = Model.Stage ?? "manager";
+    var isFinal = string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase);
+    var approvalLabel = isFinal ? "Final Approved" : "Manager Approved";
+    var approvalDateLabel = isFinal ? "Final Approved Date" : "Manager Approved Date";
+}
+
+<table class="table table-striped table-hover table-bordered" data-stage="@stage">
+    <thead class="thead-dark">
+        <tr class="header-row">
+            <th class="header-cell">
+                <div class="header-label">Product</div>
+                <select data-filter="filterProduct" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.ProductOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterProduct == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Asset Tag</div>
+                <select data-filter="filterAssetTag" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.AssetTagOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterAssetTag == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Type</div>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Status</div>
+                <select data-filter="filterStatus" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.StatusOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterStatus == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Manufacturer</div>
+                <select data-filter="filterManufacturer" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.ManufacturerOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterManufacturer == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Model</div>
+                <select data-filter="filterModel" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.ModelOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterModel == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">MFR Serial #</div>
+                <select data-filter="filterSerialNumber" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.SerialNumberOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterSerialNumber == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Warehouse</div>
+                <select data-filter="filterWarehouse" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.WarehouseOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterWarehouse == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">Discard Reason</div>
+                <select data-filter="filterDiscardReason" class="form-select form-select-sm filter-select header-filter">
+                    <option value="">All</option>
+                    @foreach (var option in Model.DiscardReasonOptions)
+                    {
+                        <option value="@option" selected="@(Model.FilterDiscardReason == option ? "selected" : null)">@option</option>
+                    }
+                </select>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">MGR Warehouse</div>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">MGR DFO</div>
+            </th>
+            <th class="header-cell">
+                <div class="header-label">MGR VP</div>
+            </th>
+            <th class="header-cell sticky-column sticky-approved">
+                <div class="header-label">@approvalLabel</div>
+            </th>
+            <th class="header-cell sticky-column sticky-date">
+                <div class="header-label">@approvalDateLabel</div>
+            </th>
+            <th class="header-cell sticky-column sticky-notes">
+                <div class="header-label">Notes</div>
+                <button type="button" class="btn btn-sm btn-outline-secondary clear-filters-btn" data-stage="@stage">Clear</button>
+            </th>
+        </tr>
+    </thead>
+
+    <tbody id="rowsContainer-@stage">
+        @await Html.PartialAsync("_DiscardApprovalRows", Model)
+    </tbody>
+</table>
+
+<div id="pagerContainer-@stage">
+    @await Html.PartialAsync("_DiscardApprovalPager", Model)
+</div>

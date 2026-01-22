@@ -1,0 +1,54 @@
+@model WebApp_Anti.Models.DiscardApprovalTableViewModel
+
+@functions { public string FormatDateForInput(DateTime? date) => date?.ToString("yyyy-MM-dd") ?? ""; }
+
+@{
+    int page = Model.Pager.CurrentPage;
+    int pageSize = 50; // keep consistent with controller
+    int i = (page - 1) * pageSize;
+    var stage = Model.Stage ?? "manager";
+    var isFinal = string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase);
+    var approvedField = isFinal ? "FinalApproved" : "ManagerApproved";
+    var approvedDateField = isFinal ? "FinalApprovedDate" : "ManagerApprovedDate";
+}
+@foreach (var item in Model.Items)
+{
+    var approvedValue = isFinal ? item.FinalApproved : item.ManagerApproved;
+    var approvedDateValue = isFinal ? item.FinalApprovedDate : item.ManagerApprovedDate;
+    <tr>
+        <td>@item.Product</td>
+        <td>@item.AssetTag</td>
+        <td></td>
+        <td>@item.Status</td>
+        <td>@item.Manufacturer</td>
+        <td>@item.Model</td>
+        <td>@item.ManufacturerSerialNumber</td>
+        <td>@item.WarehouseName</td>
+        <td>@item.DiscardNotes</td>
+
+        <td>
+            <input type="hidden" name="[@i].Product" value="@item.Product" />
+            <input type="hidden" name="[@i].AssetTag" value="@item.AssetTag" />
+        </td>
+        <td></td>
+        <td></td>
+
+        <td class="sticky-column sticky-approved">
+            <select class="form-select form-select-sm approval-select" data-row-id="@($"{stage}-{i}")" data-date-target="date-@stage-@i" name="[@i].@(approvedField)">
+                <option value="">Select...</option>
+                <option value="Yes" selected="@(approvedValue == "Yes" ? "selected" : null)">Yes</option>
+                <option value="No" selected="@(approvedValue == "No" ? "selected" : null)">No</option>
+            </select>
+        </td>
+
+        <td class="sticky-column sticky-date">
+            <input type="date" class="form-control form-control-sm approval-date" id="date-@stage-@i"
+                   name="[@i].@(approvedDateField)" value="@FormatDateForInput(approvedDateValue)" readonly />
+        </td>
+
+        <td class="sticky-column sticky-notes">
+            <input type="text" class="form-control form-control-sm notes-input" name="[@i].Notes" placeholder="Enter notes..." />
+        </td>
+    </tr>
+    i++;
+}

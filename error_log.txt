@@ -1,4 +1,7 @@
-Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'Notes'.
+Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'FinalApproved'.
+Invalid column name 'FinalApprovedDate'.
+Invalid column name 'ManagerApproved'.
+Invalid column name 'ManagerApprovedDate'.
    at Microsoft.Data.SqlClient.SqlCommand.<>c.<ExecuteDbDataReaderAsync>b__211_0(Task`1 result)
    at System.Threading.Tasks.ContinuationResultTaskFromResultTask`2.InnerInvoke()
    at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
@@ -13,6 +16,6 @@ Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'Notes'.
    at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
    at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
    at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-   at WebApp_Anti.Controllers.HomeController.Index(Int32 page) in C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\Controllers\HomeController.cs:line 38
-ClientConnectionId:a034ec1b-5007-4603-9abf-ace294898390
+   at WebApp_Anti.Controllers.HomeController.Index(Int32 page, String filterProduct, String filterAssetTag, String filterStatus, String filterManufacturer, String filterModel, String filterSerialNumber, String filterWarehouse, String filterDiscardReason) in C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\Controllers\HomeController.cs:line 41
+ClientConnectionId:ae487fed-c786-442c-b36c-3cdad1c91278
 Error Number:207,State:1,Class:16

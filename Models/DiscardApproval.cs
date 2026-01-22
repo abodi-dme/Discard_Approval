@@ -21,6 +21,16 @@ namespace WebApp_Anti.Models
 
         public DateTime? ApprovedDate { get; set; }
 
+        [MaxLength(10)]
+        public string? ManagerApproved { get; set; }
+
+        public DateTime? ManagerApprovedDate { get; set; }
+
+        [MaxLength(10)]
+        public string? FinalApproved { get; set; }
+
+        public DateTime? FinalApprovedDate { get; set; }
+
         public string? Notes { get; set; }
 
         [MaxLength(50)]

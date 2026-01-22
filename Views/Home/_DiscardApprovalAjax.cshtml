@@ -1,0 +1,11 @@
+@model WebApp_Anti.Models.DiscardApprovalTableViewModel
+
+<table class="d-none" aria-hidden="true">
+    <tbody id="rowsContainer-@Model.Stage">
+        @await Html.PartialAsync("_DiscardApprovalRows", Model)
+    </tbody>
+</table>
+
+<div id="pagerContainer-@Model.Stage">
+    @await Html.PartialAsync("_DiscardApprovalPager", Model)
+</div>

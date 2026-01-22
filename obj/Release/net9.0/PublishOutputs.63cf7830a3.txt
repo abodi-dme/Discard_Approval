@@ -1,6 +1,8 @@
 C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\WebApp_Anti.exe
 C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\appsettings.Development.json
 C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\appsettings.json
+C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\schema.json
+C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\schema_clean.json
 C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\WebApp_Anti.dll
 C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\WebApp_Anti.runtimeconfig.json
 C:\Users\AbhinavBodi\Documents\Discard Approval WebApp\WebApp_Anti\WebApp_Anti\bin\Release\net9.0\publish\WebApp_Anti.pdb

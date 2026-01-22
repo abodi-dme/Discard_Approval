@@ -1,0 +1,30 @@
+@model WebApp_Anti.Models.DiscardApprovalTableViewModel
+
+<div class="d-flex justify-content-center mt-4 gap-2">
+    @if (Model.Pager.HasPrevious)
+    {
+        <a href="javascript:void(0)" class="btn btn-outline-primary" data-page="@(Model.Pager.CurrentPage - 1)" data-stage="@Model.Stage">
+            &laquo; Previous
+        </a>
+    }
+    else
+    {
+        <span class="btn btn-outline-secondary disabled">&laquo; Previous</span>
+    }
+
+    <span class="align-self-center mx-3">
+        Page <strong>@Model.Pager.CurrentPage</strong> of <strong>@Model.Pager.TotalPages</strong>
+        (@Model.Pager.TotalItems items)
+    </span>
+
+    @if (Model.Pager.HasNext)
+    {
+        <a href="javascript:void(0)" class="btn btn-outline-primary" data-page="@(Model.Pager.CurrentPage + 1)" data-stage="@Model.Stage">
+            Next &raquo;
+        </a>
+    }
+    else
+    {
+        <span class="btn btn-outline-secondary disabled">Next &raquo;</span>
+    }
+</div>

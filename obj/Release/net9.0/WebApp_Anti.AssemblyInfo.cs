@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WebApp_Anti")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+472399fb2bd3403795dc81204dcf4cac172e278c")]
 [assembly: System.Reflection.AssemblyProductAttribute("WebApp_Anti")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WebApp_Anti")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

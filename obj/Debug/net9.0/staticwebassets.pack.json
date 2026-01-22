@@ -13,6 +13,10 @@
       "PackagePath": "staticwebassets\\favicon.ico"
     },
     {
+      "Id": "C:\\Users\\AbhinavBodi\\Documents\\Discard Approval WebApp\\WebApp_Anti\\WebApp_Anti\\wwwroot\\images\\logo.png",
+      "PackagePath": "staticwebassets\\images\\logo.png"
+    },
+    {
       "Id": "C:\\Users\\AbhinavBodi\\Documents\\Discard Approval WebApp\\WebApp_Anti\\WebApp_Anti\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

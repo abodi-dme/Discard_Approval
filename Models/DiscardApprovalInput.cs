@@ -79,5 +79,13 @@ namespace WebApp_Anti.Models
         public string? Approved { get; set; }
 
         public DateTime? ApprovedDate { get; set; }
+
+        public string? ManagerApproved { get; set; }
+
+        public DateTime? ManagerApprovedDate { get; set; }
+
+        public string? FinalApproved { get; set; }
+
+        public DateTime? FinalApprovedDate { get; set; }
     }
 }
