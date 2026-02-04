@@ -1,0 +1,88 @@
+@model IEnumerable<WebApp_Anti.Models.AppUser>
+
+@{
+    ViewData["Title"] = "User Admin";
+}
+
+<div class="page-content">
+    <div class="admin-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="admin-title mb-0">User Administration</h2>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Back to Approval</a>
+        </div>
+
+        @if (TempData["AdminError"] != null)
+        {
+            <div class="alert alert-danger">@TempData["AdminError"]</div>
+        }
+        @if (TempData["AdminSuccess"] != null)
+        {
+            <div class="alert alert-success">@TempData["AdminSuccess"]</div>
+        }
+
+        <div class="admin-section">
+            <h4>Create User</h4>
+            <form asp-action="Create" method="post" class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" name="username" class="form-control" placeholder="Username" required />
+                </div>
+                <div class="col-md-4">
+                    <input type="password" name="password" class="form-control" placeholder="Password" required />
+                </div>
+                <div class="col-md-2">
+                    <select name="role" class="form-select">
+                        <option value="Manager">Manager</option>
+                        <option value="VP">VP</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Create</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h4>Existing Users</h4>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Update Role</th>
+                            <th>Reset Password</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var u in Model)
+                    {
+                        <tr>
+                            <td>@u.UserName</td>
+                            <td>@u.Role</td>
+                            <td>
+                                <form asp-action="UpdateRole" method="post" class="d-flex gap-2">
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <select name="role" class="form-select form-select-sm">
+                                        <option value="Manager" selected="@(u.Role == "Manager" ? "selected" : null)">Manager</option>
+                                        <option value="VP" selected="@(u.Role == "VP" ? "selected" : null)">VP</option>
+                                        <option value="Admin" selected="@(u.Role == "Admin" ? "selected" : null)">Admin</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form asp-action="ResetPassword" method="post" class="d-flex gap-2">
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <input type="password" name="password" class="form-control form-control-sm" placeholder="New password" required />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reset</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

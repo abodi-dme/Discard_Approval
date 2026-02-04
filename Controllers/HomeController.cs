@@ -21,6 +21,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Index(
         int managerPage = 1,
         int finalPage = 1,
+        int approvedPage = 1,
         string? filterProduct = null,
         string? filterAssetTag = null,
         string? filterStatus = null,
@@ -32,6 +33,13 @@ public class HomeController : Controller
     {
         try
         {
+            if (!IsLoggedIn())
+                return RedirectToAction("Login", "Auth");
+
+            ViewBag.UserRole = GetUserRole();
+            ViewBag.CanSubmitManager = CanSubmitManager();
+            ViewBag.CanSubmitFinal = CanSubmitFinal();
+
             // Base query - Filter by Status "Needs Repairing"
             var query = _context.DiscardApprovalInputs
                 .Where(x => x.Status == "Needs Repairing");
@@ -144,10 +152,42 @@ public class HomeController : Controller
                 filterWarehouse,
                 filterDiscardReason);
 
+            var approvedTable = await BuildTableAsync(
+                "approved",
+                approvedPage,
+                filterProduct,
+                filterAssetTag,
+                filterStatus,
+                filterManufacturer,
+                filterModel,
+                filterSerialNumber,
+                filterWarehouse,
+                filterDiscardReason);
+
+            var totalCostValues = await query.AsNoTracking()
+                .Select(x => x.UnitCostLastPrice)
+                .ToListAsync();
+
+            var totalDiscardCost = totalCostValues
+                .Select(x => decimal.TryParse(x, out var v) ? v : 0m)
+                .Sum();
+
+            var approvedCostValues = await query.AsNoTracking()
+                .Where(x => x.ManagerApproved == "Yes" && x.FinalApproved == "Yes")
+                .Select(x => x.UnitCostLastPrice)
+                .ToListAsync();
+
+            var approvedDiscardCost = approvedCostValues
+                .Select(x => decimal.TryParse(x, out var v) ? v : 0m)
+                .Sum();
+
             var pageModel = new DiscardApprovalPageViewModel
             {
                 ManagerTable = managerTable,
-                FinalTable = finalTable
+                FinalTable = finalTable,
+                ApprovedTable = approvedTable,
+                TotalDiscardCost = totalDiscardCost,
+                ApprovedDiscardCost = approvedDiscardCost
             };
 
             return View(pageModel);
@@ -172,6 +212,13 @@ public async Task<IActionResult> TablePartial(
     string? filterWarehouse = null,
     string? filterDiscardReason = null)
 {
+    if (!IsLoggedIn())
+        return Unauthorized();
+
+    ViewBag.UserRole = GetUserRole();
+    ViewBag.CanSubmitManager = CanSubmitManager();
+    ViewBag.CanSubmitFinal = CanSubmitFinal();
+
     var table = await BuildTableAsync(
         stage,
         page,
@@ -190,12 +237,25 @@ public async Task<IActionResult> TablePartial(
     [HttpPost]
     public async Task<IActionResult> Submit(List<SerpProductViewModel> items, string stage)
     {
+        if (!IsLoggedIn())
+            return Unauthorized();
+
         var isFinalStage = string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase);
+        if (isFinalStage && !CanSubmitFinal())
+            return Forbid();
+
+        if (!isFinalStage && !CanSubmitManager())
+            return Forbid();
 
         // Filter out items that have approval data
         var submittedItems = isFinalStage
             ? items.Where(x => !string.IsNullOrEmpty(x.FinalApproved)).ToList()
             : items.Where(x => !string.IsNullOrEmpty(x.ManagerApproved)).ToList();
+
+        submittedItems = submittedItems
+            .Where(x => !string.Equals(x.DiscardReason, "Other", StringComparison.OrdinalIgnoreCase) ||
+                        !string.IsNullOrWhiteSpace(isFinalStage ? x.FinalNotes : x.ManagerNotes))
+            .ToList();
 
         int updatedCount = 0;
         int insertedCount = 0;
@@ -213,12 +273,14 @@ public async Task<IActionResult> TablePartial(
             {
                 // UPDATE existing record
                 existing.Product = item.Product;
+                existing.DiscardReason = item.DiscardReason;
                 if (isFinalStage)
                 {
                     existing.FinalApproved = item.FinalApproved;
                     existing.FinalApprovedDate = string.IsNullOrEmpty(item.FinalApprovedDate)
                         ? null
                         : DateTime.Parse(item.FinalApprovedDate);
+                    existing.FinalNotes = item.FinalNotes;
                 }
                 else
                 {
@@ -226,8 +288,8 @@ public async Task<IActionResult> TablePartial(
                     existing.ManagerApprovedDate = string.IsNullOrEmpty(item.ManagerApprovedDate)
                         ? null
                         : DateTime.Parse(item.ManagerApprovedDate);
+                    existing.ManagerNotes = item.ManagerNotes;
                 }
-                existing.Notes = item.Notes;
                 existing.Type = item.Type;
                 existing.MgrWarehouse = item.MgrWarehouse;
                 existing.MgrDfo = item.MgrDfo;
@@ -242,6 +304,7 @@ public async Task<IActionResult> TablePartial(
                 {
                     AssetTag = item.AssetTag,
                     Product = item.Product,
+                    DiscardReason = item.DiscardReason,
                     ManagerApproved = isFinalStage ? null : item.ManagerApproved,
                     ManagerApprovedDate = isFinalStage || string.IsNullOrEmpty(item.ManagerApprovedDate)
                         ? null
@@ -250,7 +313,8 @@ public async Task<IActionResult> TablePartial(
                     FinalApprovedDate = !isFinalStage || string.IsNullOrEmpty(item.FinalApprovedDate)
                         ? null
                         : DateTime.Parse(item.FinalApprovedDate),
-                    Notes = item.Notes,
+                    ManagerNotes = isFinalStage ? null : item.ManagerNotes,
+                    FinalNotes = isFinalStage ? item.FinalNotes : null,
                     Type = item.Type,
                     MgrWarehouse = item.MgrWarehouse,
                     MgrDfo = item.MgrDfo,
@@ -269,6 +333,28 @@ public async Task<IActionResult> TablePartial(
                              $"({insertedCount} new, {updatedCount} updated)";
 
         return RedirectToAction("Index");
+    }
+
+    private bool IsLoggedIn()
+    {
+        return !string.IsNullOrWhiteSpace(HttpContext.Session.GetString("UserName"));
+    }
+
+    private string GetUserRole()
+    {
+        return HttpContext.Session.GetString("UserRole") ?? string.Empty;
+    }
+
+    private bool CanSubmitManager()
+    {
+        var role = GetUserRole();
+        return role == "Manager" || role == "VP" || role == "Admin";
+    }
+
+    private bool CanSubmitFinal()
+    {
+        var role = GetUserRole();
+        return role == "VP" || role == "Admin";
     }
 
     private IQueryable<DiscardApprovalInput> ApplyFilters(
@@ -304,7 +390,7 @@ public async Task<IActionResult> TablePartial(
             query = query.Where(x => x.WarehouseName == filterWarehouse);
 
         if (!string.IsNullOrWhiteSpace(filterDiscardReason))
-            query = query.Where(x => x.DiscardNotes == filterDiscardReason);
+            query = query.Where(x => x.DiscardReason == filterDiscardReason);
 
         return query;
     }
@@ -313,15 +399,17 @@ public async Task<IActionResult> TablePartial(
     {
         if (string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase))
         {
-            return query.Where(x =>
-                x.ManagerApproved == "Yes" &&
-                (x.FinalApproved == null || x.FinalApproved == ""));
+            // Final tab should show items pending final approval and already final approved
+            return query.Where(x => x.ManagerApproved == "Yes");
         }
 
-        return query.Where(x =>
-            x.ManagerApproved == null ||
-            x.ManagerApproved == "" ||
-            x.ManagerApproved == "No");
+        if (string.Equals(stage, "approved", StringComparison.OrdinalIgnoreCase))
+        {
+            return query.Where(x => x.FinalApproved == "Yes");
+        }
+
+        // Manager tab should show all items (including approved) for visibility
+        return query;
     }
 
     private async Task<DiscardApprovalTableViewModel> BuildTableAsync(
@@ -419,7 +507,7 @@ public async Task<IActionResult> TablePartial(
                 .OrderBy(x => x)
                 .ToList(),
             DiscardReasonOptions = optionsData
-                .Select(x => x.DiscardNotes)
+                .Select(x => x.DiscardReason)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
                 .OrderBy(x => x)

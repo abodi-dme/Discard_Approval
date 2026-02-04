@@ -34,6 +34,13 @@ namespace WebApp_Anti.Models
         public string? Notes { get; set; }
 
         [MaxLength(50)]
+        public string? DiscardReason { get; set; }
+
+        public string? ManagerNotes { get; set; }
+
+        public string? FinalNotes { get; set; }
+
+        [MaxLength(50)]
         public string? Type { get; set; }
 
         [MaxLength(100)]

@@ -28,12 +28,36 @@ build_property._RazorSourceGeneratorDebug =
 build_property.EffectiveAnalysisLevelStyle = 9.0
 build_property.EnableCodeStyleSeverity = 
 
+[C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Admin/Users.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXNlcnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Home/_DiscardApprovalAjax.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxfRGlzY2FyZEFwcHJvdmFsQWpheC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Home/_DiscardApprovalPager.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxfRGlzY2FyZEFwcHJvdmFsUGFnZXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Home/_DiscardApprovalRows.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxfRGlzY2FyZEFwcHJvdmFsUm93cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Home/_DiscardApprovalTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxfRGlzY2FyZEFwcHJvdmFsVGFibGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/AbhinavBodi/Documents/Discard Approval WebApp/WebApp_Anti/WebApp_Anti/Views/Shared/Error.cshtml]

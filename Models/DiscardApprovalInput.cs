@@ -35,6 +35,9 @@ namespace WebApp_Anti.Models
 
         public string? UnitCost { get; set; }
 
+        [Column("Unit Cost Last Price")]
+        public string? UnitCostLastPrice { get; set; }
+
         [Column("Depreciated Value")]
         public string? DepreciatedValue { get; set; }
 
@@ -43,6 +46,15 @@ namespace WebApp_Anti.Models
 
         [Column("Discard Notes")]
         public string? DiscardNotes { get; set; }
+
+        [Column("DiscardReason")]
+        public string? DiscardReason { get; set; }
+
+        public string? Notes { get; set; }
+
+        public string? ManagerNotes { get; set; }
+
+        public string? FinalNotes { get; set; }
 
         [Column("Last Updated")]
         public DateTime? LastUpdated { get; set; }

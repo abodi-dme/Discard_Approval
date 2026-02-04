@@ -3,8 +3,11 @@
 @{
     var stage = Model.Stage ?? "manager";
     var isFinal = string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase);
-    var approvalLabel = isFinal ? "Final Approved" : "Manager Approved";
-    var approvalDateLabel = isFinal ? "Final Approved Date" : "Manager Approved Date";
+    var isApprovedStage = string.Equals(stage, "approved", StringComparison.OrdinalIgnoreCase);
+    var isFinalStage = isFinal || isApprovedStage;
+    var approvalLabel = isFinalStage ? "Final Approved" : "Manager Approved";
+    var approvalDateLabel = isFinalStage ? "Final Approved Date" : "Manager Approved Date";
+    var notesLabel = isFinalStage ? "Final Notes" : "Manager Notes";
 }
 
 <table class="table table-striped table-hover table-bordered" data-stage="@stage">
@@ -27,19 +30,6 @@
                     @foreach (var option in Model.AssetTagOptions)
                     {
                         <option value="@option" selected="@(Model.FilterAssetTag == option ? "selected" : null)">@option</option>
-                    }
-                </select>
-            </th>
-            <th class="header-cell">
-                <div class="header-label">Type</div>
-            </th>
-            <th class="header-cell">
-                <div class="header-label">Status</div>
-                <select data-filter="filterStatus" class="form-select form-select-sm filter-select header-filter">
-                    <option value="">All</option>
-                    @foreach (var option in Model.StatusOptions)
-                    {
-                        <option value="@option" selected="@(Model.FilterStatus == option ? "selected" : null)">@option</option>
                     }
                 </select>
             </th>
@@ -94,6 +84,9 @@
                 </select>
             </th>
             <th class="header-cell">
+                <div class="header-label">Unit Cost</div>
+            </th>
+            <th class="header-cell">
                 <div class="header-label">MGR Warehouse</div>
             </th>
             <th class="header-cell">
@@ -108,9 +101,15 @@
             <th class="header-cell sticky-column sticky-date">
                 <div class="header-label">@approvalDateLabel</div>
             </th>
+            @if (isFinalStage)
+            {
+                <th class="header-cell sticky-column sticky-manager-notes">
+                    <div class="header-label">Manager Notes</div>
+                </th>
+            }
             <th class="header-cell sticky-column sticky-notes">
-                <div class="header-label">Notes</div>
-                <button type="button" class="btn btn-sm btn-outline-secondary clear-filters-btn" data-stage="@stage">Clear</button>
+                <div class="header-label">@notesLabel</div>
+                <button type="button" class="btn btn-sm btn-outline-secondary clear-filters-btn" data-stage="@stage">Clear Filters</button>
             </th>
         </tr>
     </thead>

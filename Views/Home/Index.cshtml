@@ -2,7 +2,9 @@
 
 @{
     ViewData["Title"] = "Discard Approval Inputs";
-    var hasData = (Model?.ManagerTable?.Items?.Any() ?? false) || (Model?.FinalTable?.Items?.Any() ?? false);
+    var hasData = (Model?.ManagerTable?.Items?.Any() ?? false) ||
+                  (Model?.FinalTable?.Items?.Any() ?? false) ||
+                  (Model?.ApprovedTable?.Items?.Any() ?? false);
 }
 
 @if (hasData)
@@ -13,16 +15,45 @@
             <div class="header-title">Discard Approval</div>
         </div>
         <div class="header-center">
-            <button type="button" class="tab-btn active" data-tab="manager">Manager Approval</button>
-            <button type="button" class="tab-btn" data-tab="final">Final Approval</button>
+            <div class="header-metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Total Discard Cost</div>
+                    <div class="metric-value">@Model.TotalDiscardCost.ToString("C")</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Approved for Discard Cost</div>
+                    <div class="metric-value">@Model.ApprovedDiscardCost.ToString("C")</div>
+                </div>
+            </div>
         </div>
         <div class="header-right">
-            <button type="submit" form="submitForm-manager" class="btn btn-success btn-lg px-4 submit-btn-fixed" data-stage="manager">
-                Submit
-            </button>
-            <button type="submit" form="submitForm-final" class="btn btn-success btn-lg px-4 submit-btn-fixed d-none" data-stage="final">
-                Submit
-            </button>
+            <div class="submit-slot">
+                @if ((ViewBag.CanSubmitManager as bool?) == true)
+                {
+                    <button type="submit" form="submitForm-manager" class="btn btn-success btn-lg px-4 submit-btn-fixed" data-stage="manager">
+                        Submit
+                    </button>
+                }
+                @if ((ViewBag.CanSubmitFinal as bool?) == true)
+                {
+                    <button type="submit" form="submitForm-final" class="btn btn-success btn-lg px-4 submit-btn-fixed is-hidden" data-stage="final">
+                        Submit
+                    </button>
+                }
+                @if ((ViewBag.CanSubmitManager as bool?) == true || (ViewBag.CanSubmitFinal as bool?) == true)
+                {
+                    <button type="button" class="btn btn-success btn-lg px-4 submit-btn-fixed is-hidden" aria-hidden="true">
+                        Submit
+                    </button>
+                }
+            </div>
+            <form asp-controller="Auth" asp-action="Logout" method="post" class="ms-2">
+                <button type="submit" class="btn btn-outline-secondary">Logout</button>
+            </form>
+            @if ((ViewBag.UserRole as string) == "Admin")
+            {
+                <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-primary ms-2">Admin</a>
+            }
         </div>
     </header>
 
@@ -35,11 +66,13 @@
             </div>
         }
 
-    <div class="tab-panel active" data-tab="manager">
-        <div class="top-scroll-container">
-            <div class="top-scroll-content"></div>
-        </div>
+    <div class="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="manager">Manager Approval</button>
+        <button type="button" class="tab-btn" data-tab="final">Final Approval</button>
+        <button type="button" class="tab-btn" data-tab="approved">Approved</button>
+    </div>
 
+    <div class="tab-panel active" data-tab="manager">
         <div class="table-responsive" data-stage="manager">
             <form asp-action="Submit" method="post" id="submitForm-manager">
                 <input type="hidden" name="stage" value="manager" />
@@ -48,13 +81,13 @@
                 </div>
             </form>
         </div>
+
+        <div class="bottom-scroll-container">
+            <div class="bottom-scroll-content"></div>
+        </div>
     </div>
 
     <div class="tab-panel" data-tab="final">
-        <div class="top-scroll-container">
-            <div class="top-scroll-content"></div>
-        </div>
-
         <div class="table-responsive" data-stage="final">
             <form asp-action="Submit" method="post" id="submitForm-final">
                 <input type="hidden" name="stage" value="final" />
@@ -62,6 +95,22 @@
                     @await Html.PartialAsync("_DiscardApprovalTable", Model.FinalTable)
                 </div>
             </form>
+        </div>
+
+        <div class="bottom-scroll-container">
+            <div class="bottom-scroll-content"></div>
+        </div>
+    </div>
+
+    <div class="tab-panel" data-tab="approved">
+        <div class="table-responsive" data-stage="approved">
+            <div class="table-container" data-stage="approved">
+                @await Html.PartialAsync("_DiscardApprovalTable", Model.ApprovedTable)
+            </div>
+        </div>
+
+        <div class="bottom-scroll-container">
+            <div class="bottom-scroll-content"></div>
         </div>
     </div>
 
@@ -86,20 +135,28 @@ else
                 if (!panel) return;
 
                 var tableContainer = $(panel).find(".table-responsive");
-                var topScrollContainer = $(panel).find(".top-scroll-container");
-                var topScrollContent = $(panel).find(".top-scroll-content");
+                var bottomScrollContainer = $(panel).find(".bottom-scroll-container");
+                var bottomScrollContent = $(panel).find(".bottom-scroll-content");
 
-                if (topScrollContainer.length === 0 || topScrollContent.length === 0) return;
+                if (bottomScrollContainer.length === 0 || bottomScrollContent.length === 0) return;
 
                 var tableWidth = $(panel).find(".table").outerWidth() || 0;
-                topScrollContent.width(tableWidth);
+                bottomScrollContent.width(tableWidth);
 
-                topScrollContainer.off("scroll").on("scroll", function () {
-                    tableContainer.scrollLeft(topScrollContainer.scrollLeft());
+                let syncing = false;
+
+                bottomScrollContainer.off("scroll").on("scroll", function () {
+                    if (syncing) return;
+                    syncing = true;
+                    tableContainer.scrollLeft(bottomScrollContainer.scrollLeft());
+                    syncing = false;
                 });
 
                 tableContainer.off("scroll").on("scroll", function () {
-                    topScrollContainer.scrollLeft(tableContainer.scrollLeft());
+                    if (syncing) return;
+                    syncing = true;
+                    bottomScrollContainer.scrollLeft(tableContainer.scrollLeft());
+                    syncing = false;
                 });
             }
 
@@ -115,6 +172,17 @@ else
                     } else {
                         dateInput.val("");
                     }
+                });
+            }
+
+            function wireDiscardReasonValidation() {
+                $(document).off("change", ".discard-reason-select").on("change", ".discard-reason-select", function () {
+                    var reason = $(this).val();
+                    var notesTarget = $(this).data("notes-target");
+                    var notesInput = $("#" + notesTarget);
+                    var isOther = reason === "Other";
+                    notesInput.prop("required", isOther);
+                    notesInput.attr("placeholder", isOther ? "Required when reason is Other" : "Enter notes...");
                 });
             }
 
@@ -193,6 +261,7 @@ else
 
                 syncTopScrollbar(stage);
                 wireApprovalDateAutoFill();
+                wireDiscardReasonValidation();
             }
 
             function activateTab(stage) {
@@ -202,14 +271,17 @@ else
                 $(".tab-panel").removeClass("active");
                 $('.tab-panel[data-tab="' + stage + '"]').addClass("active");
 
-                $(".submit-btn-fixed").addClass("d-none");
-                $('.submit-btn-fixed[data-stage="' + stage + '"]').removeClass("d-none");
+                $(".submit-btn-fixed").addClass("is-hidden");
+                if (stage !== "approved") {
+                    $('.submit-btn-fixed[data-stage="' + stage + '"]').removeClass("is-hidden");
+                }
 
                 syncTopScrollbar(stage);
             }
 
             syncTopScrollbar("manager");
             wireApprovalDateAutoFill();
+            wireDiscardReasonValidation();
 
             $(document).on("change", ".tab-panel [data-filter]", function () {
                 var stage = $(this).closest(".tab-panel").data("tab");

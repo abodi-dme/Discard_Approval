@@ -8,23 +8,36 @@
     int i = (page - 1) * pageSize;
     var stage = Model.Stage ?? "manager";
     var isFinal = string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase);
-    var approvedField = isFinal ? "FinalApproved" : "ManagerApproved";
-    var approvedDateField = isFinal ? "FinalApprovedDate" : "ManagerApprovedDate";
+    var isApprovedStage = string.Equals(stage, "approved", StringComparison.OrdinalIgnoreCase);
+    var isFinalStage = isFinal || isApprovedStage;
+    var approvedField = isFinalStage ? "FinalApproved" : "ManagerApproved";
+    var approvedDateField = isFinalStage ? "FinalApprovedDate" : "ManagerApprovedDate";
+    var role = (ViewBag.UserRole as string) ?? string.Empty;
+    var canEditFinal = role == "VP" || role == "Admin";
+    var canEditManager = role == "Manager" || role == "VP" || role == "Admin";
+    var isReadOnlyStage = isApprovedStage || (isFinalStage && !canEditFinal) || (!isFinalStage && !canEditManager);
 }
 @foreach (var item in Model.Items)
 {
-    var approvedValue = isFinal ? item.FinalApproved : item.ManagerApproved;
-    var approvedDateValue = isFinal ? item.FinalApprovedDate : item.ManagerApprovedDate;
+    var approvedValue = isFinalStage ? item.FinalApproved : item.ManagerApproved;
+    var approvedDateValue = isFinalStage ? item.FinalApprovedDate : item.ManagerApprovedDate;
     <tr>
         <td>@item.Product</td>
         <td>@item.AssetTag</td>
-        <td></td>
-        <td>@item.Status</td>
         <td>@item.Manufacturer</td>
         <td>@item.Model</td>
         <td>@item.ManufacturerSerialNumber</td>
         <td>@item.WarehouseName</td>
-        <td>@item.DiscardNotes</td>
+        <td>
+            <select class="form-select form-select-sm discard-reason-select" name="[@i].DiscardReason" data-notes-target="notes-@stage-@i" @(isReadOnlyStage ? "disabled" : null)>
+                <option value="">Select...</option>
+                <option value="Sold" selected="@(item.DiscardReason == "Sold" ? "selected" : null)">Sold</option>
+                <option value="Scrap" selected="@(item.DiscardReason == "Scrap" ? "selected" : null)">Scrap</option>
+                <option value="Lost" selected="@(item.DiscardReason == "Lost" ? "selected" : null)">Lost</option>
+                <option value="Other" selected="@(item.DiscardReason == "Other" ? "selected" : null)">Other</option>
+            </select>
+        </td>
+        <td>@item.UnitCost</td>
 
         <td>
             <input type="hidden" name="[@i].Product" value="@item.Product" />
@@ -34,7 +47,7 @@
         <td></td>
 
         <td class="sticky-column sticky-approved">
-            <select class="form-select form-select-sm approval-select" data-row-id="@($"{stage}-{i}")" data-date-target="date-@stage-@i" name="[@i].@(approvedField)">
+            <select class="form-select form-select-sm approval-select" data-row-id="@($"{stage}-{i}")" data-date-target="date-@stage-@i" name="[@i].@(approvedField)" @(isReadOnlyStage ? "disabled" : null)>
                 <option value="">Select...</option>
                 <option value="Yes" selected="@(approvedValue == "Yes" ? "selected" : null)">Yes</option>
                 <option value="No" selected="@(approvedValue == "No" ? "selected" : null)">No</option>
@@ -46,9 +59,23 @@
                    name="[@i].@(approvedDateField)" value="@FormatDateForInput(approvedDateValue)" readonly />
         </td>
 
-        <td class="sticky-column sticky-notes">
-            <input type="text" class="form-control form-control-sm notes-input" name="[@i].Notes" placeholder="Enter notes..." />
-        </td>
+        @if (isFinal || isApprovedStage)
+        {
+            <td class="sticky-column sticky-manager-notes">
+                <input type="text" class="form-control form-control-sm notes-input" value="@item.ManagerNotes" readonly />
+            </td>
+            <td class="sticky-column sticky-notes">
+                <input type="text" class="form-control form-control-sm notes-input" id="notes-@stage-@i" name="[@i].FinalNotes"
+                       value="@item.FinalNotes" placeholder="Enter final notes..." @(isReadOnlyStage ? "readonly" : null) />
+            </td>
+        }
+        else
+        {
+            <td class="sticky-column sticky-notes">
+                <input type="text" class="form-control form-control-sm notes-input" id="notes-@stage-@i" name="[@i].ManagerNotes"
+                       value="@item.ManagerNotes" placeholder="Enter manager notes..." @(isReadOnlyStage ? "readonly" : null) />
+            </td>
+        }
     </tr>
     i++;
 }
