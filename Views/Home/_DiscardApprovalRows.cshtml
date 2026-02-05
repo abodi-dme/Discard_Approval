@@ -29,7 +29,7 @@
         <td>@item.ManufacturerSerialNumber</td>
         <td>@item.WarehouseName</td>
         <td>
-            <select class="form-select form-select-sm discard-reason-select" name="[@i].DiscardReason" data-notes-target="notes-@stage-@i" @(isReadOnlyStage ? "disabled" : null)>
+            <select class="form-select form-select-sm discard-reason-select" name="[@i].DiscardReason" data-notes-target="notes-@stage-@i" @(isReadOnlyStage ? "disabled" : null) @(!isReadOnlyStage ? "required" : null)>
                 <option value="">Select...</option>
                 <option value="Sold" selected="@(item.DiscardReason == "Sold" ? "selected" : null)">Sold</option>
                 <option value="Scrap" selected="@(item.DiscardReason == "Scrap" ? "selected" : null)">Scrap</option>

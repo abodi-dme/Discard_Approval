@@ -25,5 +25,7 @@ namespace WebApp_Anti.Models
         public string? FilterSerialNumber { get; set; }
         public string? FilterWarehouse { get; set; }
         public string? FilterDiscardReason { get; set; }
+        public string? FilterManagerApproved { get; set; }
+        public string? FilterFinalApproved { get; set; }
     }
 }

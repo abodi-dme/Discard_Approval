@@ -97,6 +97,22 @@
             </th>
             <th class="header-cell sticky-column sticky-approved">
                 <div class="header-label">@approvalLabel</div>
+                @if (!isFinalStage)
+                {
+                    <select data-filter="filterManagerApproved" class="form-select form-select-sm filter-select header-filter">
+                        <option value="">All</option>
+                        <option value="Yes" selected="@(Model.FilterManagerApproved == "Yes" ? "selected" : null)">Yes</option>
+                        <option value="No" selected="@(Model.FilterManagerApproved == "No" ? "selected" : null)">No</option>
+                    </select>
+                }
+                else
+                {
+                    <select data-filter="filterFinalApproved" class="form-select form-select-sm filter-select header-filter">
+                        <option value="">All</option>
+                        <option value="Yes" selected="@(Model.FilterFinalApproved == "Yes" ? "selected" : null)">Yes</option>
+                        <option value="No" selected="@(Model.FilterFinalApproved == "No" ? "selected" : null)">No</option>
+                    </select>
+                }
             </th>
             <th class="header-cell sticky-column sticky-date">
                 <div class="header-label">@approvalDateLabel</div>

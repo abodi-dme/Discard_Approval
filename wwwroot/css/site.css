@@ -99,11 +99,13 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     overflow-x: auto;
+    overflow-y: auto;
     border: 1px solid #e5e7eb;
     margin: 0 0.75rem 2rem;
     padding-right: 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    max-height: var(--table-body-height, calc(100vh - 260px));
 }
 
 .table-responsive::-webkit-scrollbar {
@@ -128,7 +130,7 @@ body {
 .sticky-column {
     position: sticky !important;
     position: -webkit-sticky !important;
-    z-index: 100;
+    z-index: 80;
     background-color: #ffffff;
     /* Default background */
     background-clip: padding-box;
@@ -144,7 +146,7 @@ body {
 
 /* Ensure headers stay on top of body content */
 thead th.sticky-column {
-    z-index: 101;
+    z-index: 110;
     background-color: #f1f5f9 !important;
     /* Match header bg */
     border-bottom: 2px solid #e2e8f0;
@@ -176,6 +178,23 @@ thead th.sticky-column {
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
+}
+
+.header-row th {
+    position: sticky;
+    top: 0;
+    z-index: 95;
+    background: linear-gradient(180deg, #fbfdff 0%, #f1f5f9 100%);
+}
+
+/* Hide scrolling content behind sticky header */
+.table-responsive {
+    isolation: isolate;
+}
+
+.table thead {
+    background: #f1f5f9;
+    box-shadow: 0 3px 0 #e2e8f0;
 }
 
 .table-striped tbody tr:nth-of-type(odd) {
@@ -633,4 +652,5 @@ table[data-stage="manager"] .sticky-approved {
     body {
         padding-top: 140px;
     }
+
 }

@@ -2,9 +2,10 @@
 
 @{
     ViewData["Title"] = "Discard Approval Inputs";
-    var hasData = (Model?.ManagerTable?.Items?.Any() ?? false) ||
-                  (Model?.FinalTable?.Items?.Any() ?? false) ||
-                  (Model?.ApprovedTable?.Items?.Any() ?? false);
+    var hasData = Model != null &&
+                  (Model.ManagerTable?.Items?.Any() == true ||
+                   Model.FinalTable?.Items?.Any() == true ||
+                   Model.ApprovedTable?.Items?.Any() == true);
 }
 
 @if (hasData)
@@ -126,6 +127,18 @@ else
 @section Scripts {
     <script>
         $(document).ready(function () {
+            function updateTableHeights() {
+                $(".tab-panel").each(function () {
+                    var panel = this;
+                    var tableContainer = panel.querySelector(".table-responsive");
+                    if (!tableContainer) return;
+                    var rect = tableContainer.getBoundingClientRect();
+                    var available = window.innerHeight - rect.top - 24;
+                    if (available < 260) available = 260;
+                    tableContainer.style.setProperty("--table-body-height", available + "px");
+                });
+            }
+
             function getPanel(stage) {
                 return document.querySelector('.tab-panel[data-tab="' + stage + '"]');
             }
@@ -183,6 +196,9 @@ else
                     var isOther = reason === "Other";
                     notesInput.prop("required", isOther);
                     notesInput.attr("placeholder", isOther ? "Required when reason is Other" : "Enter notes...");
+                    if (reason) {
+                        this.setCustomValidity("");
+                    }
                 });
             }
 
@@ -200,7 +216,9 @@ else
                     filterModel: $(panel).find('[data-filter="filterModel"]').val() || "",
                     filterSerialNumber: $(panel).find('[data-filter="filterSerialNumber"]').val() || "",
                     filterWarehouse: $(panel).find('[data-filter="filterWarehouse"]').val() || "",
-                    filterDiscardReason: $(panel).find('[data-filter="filterDiscardReason"]').val() || ""
+                    filterDiscardReason: $(panel).find('[data-filter="filterDiscardReason"]').val() || "",
+                    filterManagerApproved: $(panel).find('[data-filter="filterManagerApproved"]').val() || "",
+                    filterFinalApproved: $(panel).find('[data-filter="filterFinalApproved"]').val() || ""
                 };
             }
 
@@ -262,6 +280,7 @@ else
                 syncTopScrollbar(stage);
                 wireApprovalDateAutoFill();
                 wireDiscardReasonValidation();
+                updateTableHeights();
             }
 
             function activateTab(stage) {
@@ -277,8 +296,11 @@ else
                 }
 
                 syncTopScrollbar(stage);
+                updateTableHeights();
             }
 
+            updateTableHeights();
+            window.addEventListener("resize", updateTableHeights);
             syncTopScrollbar("manager");
             wireApprovalDateAutoFill();
             wireDiscardReasonValidation();
@@ -305,6 +327,23 @@ else
 
             $(document).on("click", ".tab-btn", function () {
                 activateTab($(this).data("tab"));
+            });
+
+            $(document).on("submit", "#submitForm-manager, #submitForm-final", function (e) {
+                var invalid = false;
+                $(this).find(".discard-reason-select").each(function () {
+                    if ($(this).prop("disabled")) return;
+                    if (!$(this).val()) {
+                        this.setCustomValidity("Select a discard reason.");
+                        this.reportValidity();
+                        invalid = true;
+                        return false;
+                    }
+                });
+
+                if (invalid) {
+                    e.preventDefault();
+                }
             });
         });
     </script>

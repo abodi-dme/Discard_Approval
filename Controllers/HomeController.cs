@@ -29,7 +29,9 @@ public class HomeController : Controller
         string? filterModel = null,
         string? filterSerialNumber = null,
         string? filterWarehouse = null,
-        string? filterDiscardReason = null)
+        string? filterDiscardReason = null,
+        string? filterManagerApproved = null,
+        string? filterFinalApproved = null)
     {
         try
         {
@@ -97,8 +99,9 @@ public class HomeController : Controller
                 .ToList();
             
             ViewBag.DiscardReasonOptions = allData
-                .Select(x => x.DiscardNotes)
+                .Select(x => x.DiscardReason)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList();
@@ -138,7 +141,9 @@ public class HomeController : Controller
                 filterModel,
                 filterSerialNumber,
                 filterWarehouse,
-                filterDiscardReason);
+                filterDiscardReason,
+                filterManagerApproved,
+                filterFinalApproved);
 
             var finalTable = await BuildTableAsync(
                 "final",
@@ -150,7 +155,9 @@ public class HomeController : Controller
                 filterModel,
                 filterSerialNumber,
                 filterWarehouse,
-                filterDiscardReason);
+                filterDiscardReason,
+                filterManagerApproved,
+                filterFinalApproved);
 
             var approvedTable = await BuildTableAsync(
                 "approved",
@@ -162,7 +169,9 @@ public class HomeController : Controller
                 filterModel,
                 filterSerialNumber,
                 filterWarehouse,
-                filterDiscardReason);
+                filterDiscardReason,
+                filterManagerApproved,
+                filterFinalApproved);
 
             var totalCostValues = await query.AsNoTracking()
                 .Select(x => x.UnitCostLastPrice)
@@ -210,7 +219,9 @@ public async Task<IActionResult> TablePartial(
     string? filterModel = null,
     string? filterSerialNumber = null,
     string? filterWarehouse = null,
-    string? filterDiscardReason = null)
+    string? filterDiscardReason = null,
+    string? filterManagerApproved = null,
+    string? filterFinalApproved = null)
 {
     if (!IsLoggedIn())
         return Unauthorized();
@@ -229,7 +240,9 @@ public async Task<IActionResult> TablePartial(
         filterModel,
         filterSerialNumber,
         filterWarehouse,
-        filterDiscardReason);
+        filterDiscardReason,
+        filterManagerApproved,
+        filterFinalApproved);
 
     return PartialView("_DiscardApprovalAjax", table);
 }
@@ -253,6 +266,7 @@ public async Task<IActionResult> TablePartial(
             : items.Where(x => !string.IsNullOrEmpty(x.ManagerApproved)).ToList();
 
         submittedItems = submittedItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.DiscardReason))
             .Where(x => !string.Equals(x.DiscardReason, "Other", StringComparison.OrdinalIgnoreCase) ||
                         !string.IsNullOrWhiteSpace(isFinalStage ? x.FinalNotes : x.ManagerNotes))
             .ToList();
@@ -366,7 +380,9 @@ public async Task<IActionResult> TablePartial(
         string? filterModel,
         string? filterSerialNumber,
         string? filterWarehouse,
-        string? filterDiscardReason)
+        string? filterDiscardReason,
+        string? filterManagerApproved,
+        string? filterFinalApproved)
     {
         if (!string.IsNullOrWhiteSpace(filterProduct))
             query = query.Where(x => x.Product == filterProduct);
@@ -391,6 +407,12 @@ public async Task<IActionResult> TablePartial(
 
         if (!string.IsNullOrWhiteSpace(filterDiscardReason))
             query = query.Where(x => x.DiscardReason == filterDiscardReason);
+
+        if (!string.IsNullOrWhiteSpace(filterManagerApproved))
+            query = query.Where(x => x.ManagerApproved == filterManagerApproved);
+
+        if (!string.IsNullOrWhiteSpace(filterFinalApproved))
+            query = query.Where(x => x.FinalApproved == filterFinalApproved);
 
         return query;
     }
@@ -422,7 +444,9 @@ public async Task<IActionResult> TablePartial(
         string? filterModel,
         string? filterSerialNumber,
         string? filterWarehouse,
-        string? filterDiscardReason)
+        string? filterDiscardReason,
+        string? filterManagerApproved,
+        string? filterFinalApproved)
     {
         var baseQuery = _context.DiscardApprovalInputs
             .Where(x => x.Status == "Needs Repairing");
@@ -440,7 +464,9 @@ public async Task<IActionResult> TablePartial(
             filterModel,
             filterSerialNumber,
             filterWarehouse,
-            filterDiscardReason);
+            filterDiscardReason,
+            filterManagerApproved,
+            filterFinalApproved);
 
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
@@ -467,48 +493,56 @@ public async Task<IActionResult> TablePartial(
             ProductOptions = optionsData
                 .Select(x => x.Product)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             AssetTagOptions = optionsData
                 .Select(x => x.AssetTag)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             StatusOptions = optionsData
                 .Select(x => x.Status)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             ManufacturerOptions = optionsData
                 .Select(x => x.Manufacturer)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             ModelOptions = optionsData
                 .Select(x => x.Model)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             SerialNumberOptions = optionsData
                 .Select(x => x.ManufacturerSerialNumber)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             WarehouseOptions = optionsData
                 .Select(x => x.WarehouseName)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
             DiscardReasonOptions = optionsData
                 .Select(x => x.DiscardReason)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList(),
@@ -519,7 +553,9 @@ public async Task<IActionResult> TablePartial(
             FilterModel = filterModel,
             FilterSerialNumber = filterSerialNumber,
             FilterWarehouse = filterWarehouse,
-            FilterDiscardReason = filterDiscardReason
+            FilterDiscardReason = filterDiscardReason,
+            FilterManagerApproved = filterManagerApproved,
+            FilterFinalApproved = filterFinalApproved
         };
     }
 
