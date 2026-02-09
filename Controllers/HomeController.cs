@@ -41,6 +41,7 @@ public class HomeController : Controller
             ViewBag.UserRole = GetUserRole();
             ViewBag.CanSubmitManager = CanSubmitManager();
             ViewBag.CanSubmitFinal = CanSubmitFinal();
+            ViewBag.VpSessionTotal = GetVpSessionTotal();
 
             // Base query - Filter by Status "Needs Repairing"
             var query = _context.DiscardApprovalInputs
@@ -266,13 +267,27 @@ public async Task<IActionResult> TablePartial(
             : items.Where(x => !string.IsNullOrEmpty(x.ManagerApproved)).ToList();
 
         submittedItems = submittedItems
-            .Where(x => !string.IsNullOrWhiteSpace(x.DiscardReason))
-            .Where(x => !string.Equals(x.DiscardReason, "Other", StringComparison.OrdinalIgnoreCase) ||
-                        !string.IsNullOrWhiteSpace(isFinalStage ? x.FinalNotes : x.ManagerNotes))
+            .Where(x =>
+            {
+                var approvedValue = isFinalStage ? x.FinalApproved : x.ManagerApproved;
+                if (!string.Equals(approvedValue, "Yes", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                if (string.IsNullOrWhiteSpace(x.DiscardReason))
+                    return false;
+
+                var reason = x.DiscardReason.Trim();
+                if (!reason.Equals("Other", StringComparison.OrdinalIgnoreCase) &&
+                    !reason.Equals("Scrap", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                return !string.IsNullOrWhiteSpace(isFinalStage ? x.FinalNotes : x.ManagerNotes);
+            })
             .ToList();
 
         int updatedCount = 0;
         int insertedCount = 0;
+        decimal sessionDelta = 0m;
 
         foreach (var item in submittedItems)
         {
@@ -285,6 +300,7 @@ public async Task<IActionResult> TablePartial(
 
             if (existing != null)
             {
+                var wasFinalApproved = string.Equals(existing.FinalApproved, "Yes", StringComparison.OrdinalIgnoreCase);
                 // UPDATE existing record
                 existing.Product = item.Product;
                 existing.DiscardReason = item.DiscardReason;
@@ -295,6 +311,11 @@ public async Task<IActionResult> TablePartial(
                         ? null
                         : DateTime.Parse(item.FinalApprovedDate);
                     existing.FinalNotes = item.FinalNotes;
+
+                    if (!wasFinalApproved && string.Equals(item.FinalApproved, "Yes", StringComparison.OrdinalIgnoreCase))
+                    {
+                        sessionDelta += ParseUnitCost(item.UnitCost);
+                    }
                 }
                 else
                 {
@@ -337,11 +358,25 @@ public async Task<IActionResult> TablePartial(
                 };
                 _context.DiscardApprovals.Add(newApproval);
                 insertedCount++;
+
+                if (isFinalStage && string.Equals(item.FinalApproved, "Yes", StringComparison.OrdinalIgnoreCase))
+                {
+                    sessionDelta += ParseUnitCost(item.UnitCost);
+                }
             }
         }
 
         // Save all changes to database
         await _context.SaveChangesAsync();
+
+        if (isFinalStage && CanSubmitFinal())
+        {
+            if (sessionDelta > 0)
+            {
+                AddToVpSessionTotal(sessionDelta);
+            }
+            ResetVpSessionCounter();
+        }
 
         TempData["Message"] = $"Successfully processed {submittedItems.Count} items. " +
                              $"({insertedCount} new, {updatedCount} updated)";
@@ -369,6 +404,106 @@ public async Task<IActionResult> TablePartial(
     {
         var role = GetUserRole();
         return role == "VP" || role == "Admin";
+    }
+
+    private decimal ParseUnitCost(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return 0m;
+
+        var cleaned = raw.Replace("$", "").Replace(",", "").Trim();
+        return decimal.TryParse(cleaned, out var value) ? value : 0m;
+    }
+
+    private decimal GetVpSessionTotal()
+    {
+        var role = GetUserRole();
+        if (role != "VP" && role != "Admin")
+            return 0m;
+
+        var raw = HttpContext.Session.GetString("VpSessionTotal");
+        return decimal.TryParse(raw, out var value) ? value : 0m;
+    }
+
+    private void AddToVpSessionTotal(decimal delta)
+    {
+        var current = GetVpSessionTotal();
+        HttpContext.Session.SetString("VpSessionTotal", (current + delta).ToString("F2"));
+    }
+
+    private void ResetVpSessionCounter()
+    {
+        HttpContext.Session.SetString("VpSessionTotal", "0");
+        HttpContext.Session.SetString("VpSessionApprovedSet", "[]");
+    }
+
+    [HttpPost]
+    public IActionResult UpdateVpSessionCounter([FromBody] VpSessionUpdateRequest request)
+    {
+        if (!IsLoggedIn())
+            return Unauthorized();
+
+        if (!CanSubmitFinal())
+            return Forbid();
+
+        if (request == null || string.IsNullOrWhiteSpace(request.AssetTag))
+            return BadRequest();
+
+        var approvedSet = GetVpSessionApprovedSet();
+        var key = request.AssetTag.Trim();
+        var cost = ParseUnitCost(request.UnitCost);
+
+        if (request.Approved)
+        {
+            if (!approvedSet.Contains(key))
+            {
+                approvedSet.Add(key);
+                AddToVpSessionTotal(cost);
+            }
+        }
+        else
+        {
+            if (approvedSet.Contains(key))
+            {
+                approvedSet.Remove(key);
+                AddToVpSessionTotal(-cost);
+            }
+        }
+
+        SaveVpSessionApprovedSet(approvedSet);
+        var total = GetVpSessionTotal();
+        return Json(new { total = total });
+    }
+
+    private HashSet<string> GetVpSessionApprovedSet()
+    {
+        var raw = HttpContext.Session.GetString("VpSessionApprovedSet");
+        if (string.IsNullOrWhiteSpace(raw))
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            var list = System.Text.Json.JsonSerializer.Deserialize<List<string>>(raw) ?? new List<string>();
+            return new HashSet<string>(list, StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private void SaveVpSessionApprovedSet(HashSet<string> set)
+    {
+        var list = set.ToList();
+        var raw = System.Text.Json.JsonSerializer.Serialize(list);
+        HttpContext.Session.SetString("VpSessionApprovedSet", raw);
+    }
+
+    public class VpSessionUpdateRequest
+    {
+        public string? AssetTag { get; set; }
+        public bool Approved { get; set; }
+        public string? UnitCost { get; set; }
     }
 
     private IQueryable<DiscardApprovalInput> ApplyFilters(
@@ -421,8 +556,9 @@ public async Task<IActionResult> TablePartial(
     {
         if (string.Equals(stage, "final", StringComparison.OrdinalIgnoreCase))
         {
-            // Final tab should show items pending final approval and already final approved
-            return query.Where(x => x.ManagerApproved == "Yes");
+            // Final tab: only items manager approved but not yet finally approved
+            return query.Where(x => x.ManagerApproved == "Yes" &&
+                                    (x.FinalApproved == null || x.FinalApproved != "Yes"));
         }
 
         if (string.Equals(stage, "approved", StringComparison.OrdinalIgnoreCase))
@@ -430,8 +566,8 @@ public async Task<IActionResult> TablePartial(
             return query.Where(x => x.FinalApproved == "Yes");
         }
 
-        // Manager tab should show all items (including approved) for visibility
-        return query;
+        // Manager tab: only items not yet manager approved
+        return query.Where(x => x.ManagerApproved == null || x.ManagerApproved != "Yes");
     }
 
     private async Task<DiscardApprovalTableViewModel> BuildTableAsync(

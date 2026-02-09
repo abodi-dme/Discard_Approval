@@ -25,6 +25,13 @@
                     <div class="metric-label">Approved for Discard Cost</div>
                     <div class="metric-value">@Model.ApprovedDiscardCost.ToString("C")</div>
                 </div>
+                @if ((ViewBag.UserRole as string) == "VP" || (ViewBag.UserRole as string) == "Admin")
+                {
+                    <div class="metric-card">
+                        <div class="metric-label">VP Session Approved</div>
+                        <div class="metric-value" id="vpSessionTotal">@(((decimal)(ViewBag.VpSessionTotal ?? 0m)).ToString("C"))</div>
+                    </div>
+                }
             </div>
         </div>
         <div class="header-right">
@@ -185,6 +192,29 @@ else
                     } else {
                         dateInput.val("");
                     }
+
+                    var row = $(this).closest("tr");
+                    var discardSelect = row.find(".discard-reason-select");
+                    var needsReason = selectedValue === "Yes";
+                    discardSelect.prop("required", needsReason);
+                    if (!needsReason) {
+                        discardSelect[0]?.setCustomValidity?.("");
+                    }
+
+                    var notesInput = row.find(".notes-input");
+                    var reason = discardSelect.val();
+                    var needsNotes = needsReason && (reason === "Other" || reason === "Scrap");
+                    notesInput.prop("required", needsNotes);
+                    if (!needsNotes) {
+                        notesInput[0]?.setCustomValidity?.("");
+                    }
+
+                    var stage = row.closest(".table-responsive").data("stage");
+                    var isFinalStage = stage === "final";
+                    var hasSessionCounter = $("#vpSessionTotal").length > 0;
+                    if (isFinalStage && hasSessionCounter) {
+                        updateVpSessionCounter(row, selectedValue === "Yes");
+                    }
                 });
             }
 
@@ -193,13 +223,63 @@ else
                     var reason = $(this).val();
                     var notesTarget = $(this).data("notes-target");
                     var notesInput = $("#" + notesTarget);
-                    var isOther = reason === "Other";
-                    notesInput.prop("required", isOther);
-                    notesInput.attr("placeholder", isOther ? "Required when reason is Other" : "Enter notes...");
+                    var approvedValue = $(this).closest("tr").find(".approval-select").val();
+                    var needsNotes = approvedValue === "Yes" && (reason === "Other" || reason === "Scrap");
+                    notesInput.prop("required", needsNotes);
+                    notesInput.attr("placeholder", needsNotes ? "Required for Other/Scrap" : "Enter notes...");
                     if (reason) {
                         this.setCustomValidity("");
                     }
                 });
+            }
+
+            function syncReasonRequirements(panel) {
+                if (!panel) return;
+                $(panel).find("tr").each(function () {
+                    var row = $(this);
+                    var approvedValue = row.find(".approval-select").val();
+                    var discardSelect = row.find(".discard-reason-select");
+                    var notesInput = row.find(".notes-input");
+                    var needsReason = approvedValue === "Yes";
+                    discardSelect.prop("required", needsReason);
+                    if (!needsReason) {
+                        discardSelect[0]?.setCustomValidity?.("");
+                    }
+                    var reason = discardSelect.val();
+                    var needsNotes = needsReason && (reason === "Other" || reason === "Scrap");
+                    notesInput.prop("required", needsNotes);
+                    if (!needsNotes) {
+                        notesInput[0]?.setCustomValidity?.("");
+                    }
+                });
+            }
+
+            async function updateVpSessionCounter(row, isApproved) {
+                var assetTag = row.find('input[name$=".AssetTag"]').val();
+                var unitCost = row.find('input[name$=".UnitCost"]').val();
+                if (!assetTag) return;
+
+                try {
+                    const res = await fetch('@Url.Action("UpdateVpSessionCounter", "Home")', {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                        body: JSON.stringify({
+                            assetTag: assetTag,
+                            approved: isApproved,
+                            unitCost: unitCost
+                        })
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (typeof data.total === "number") {
+                        $("#vpSessionTotal").text(data.total.toLocaleString("en-US", { style: "currency", currency: "USD" }));
+                    }
+                } catch (e) {
+                    console.error("VP session counter update failed", e);
+                }
             }
 
             function getFilters(stage, page) {
@@ -280,6 +360,7 @@ else
                 syncTopScrollbar(stage);
                 wireApprovalDateAutoFill();
                 wireDiscardReasonValidation();
+                syncReasonRequirements(getPanel(stage));
                 updateTableHeights();
             }
 
@@ -297,6 +378,7 @@ else
 
                 syncTopScrollbar(stage);
                 updateTableHeights();
+                syncReasonRequirements(getPanel(stage));
             }
 
             updateTableHeights();
@@ -304,6 +386,7 @@ else
             syncTopScrollbar("manager");
             wireApprovalDateAutoFill();
             wireDiscardReasonValidation();
+            syncReasonRequirements(getPanel("manager"));
 
             $(document).on("change", ".tab-panel [data-filter]", function () {
                 var stage = $(this).closest(".tab-panel").data("tab");
@@ -333,7 +416,9 @@ else
                 var invalid = false;
                 $(this).find(".discard-reason-select").each(function () {
                     if ($(this).prop("disabled")) return;
-                    if (!$(this).val()) {
+                    var row = $(this).closest("tr");
+                    var approvedValue = row.find(".approval-select").val();
+                    if (approvedValue === "Yes" && !$(this).val()) {
                         this.setCustomValidity("Select a discard reason.");
                         this.reportValidity();
                         invalid = true;

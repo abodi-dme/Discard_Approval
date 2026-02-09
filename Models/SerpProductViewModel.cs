@@ -18,5 +18,6 @@ namespace WebApp_Anti.Models
         public string? MgrWarehouse { get; set; }
         public string? MgrDfo { get; set; }
         public string? MgrVp { get; set; }
+        public string? UnitCost { get; set; }
     }
 }
